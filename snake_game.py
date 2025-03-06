@@ -48,14 +48,16 @@ def get_hand_direction(landmarks):
 
     x_vals = [tip.x for tip in finger_tips]
     y_vals = [tip.y for tip in finger_tips]
+    avg_x = sum(x_vals) / len(x_vals)
+    avg_y = sum(y_vals) / len(y_vals)
 
-    if all(y > wrist.y for y in y_vals):
+    if avg_y > wrist.y + 0.1:  # Added threshold
         return 3  # Down
-    elif all(y < wrist.y for y in y_vals):
+    elif avg_y < wrist.y - 0.1:
         return 2  # Up
-    elif all(x < wrist.x for x in x_vals):
+    elif avg_x < wrist.x - 0.1:
         return 0  # Left
-    elif all(x > wrist.x for x in x_vals):
+    elif avg_x > wrist.x + 0.1:
         return 1  # Right
     return -1
 
