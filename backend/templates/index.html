@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Snake Game CV - Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+        
+        #main-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            padding: 20px;
+        }
+        
+        #game-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(45deg, #000000, #1a1a1a);
+            border: 3px solid #00ff88;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+        
+        #video-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        #video-container {
+            width: 400px;
+            height: 300px;
+            border: 3px solid #00ff88;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+        }
+        
+        #video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        #gesture-info {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 15px;
+            width: 400px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .info-label {
+            color: #00ff88;
+            font-weight: bold;
+        }
+        
+        .info-value {
+            color: #ffffff;
+        }
+        
+        .direction-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .direction-none { background-color: #666; }
+        .direction-up { background-color: #ff6b6b; }
+        .direction-down { background-color: #4ecdc4; }
+        .direction-left { background-color: #45b7d1; }
+        .direction-right { background-color: #96ceb4; }
+        
+        .snake {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+            border-radius: 2px;
+            box-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+        }
+        
+        .apple {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: radial-gradient(circle, #ff4757, #ff3742);
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255, 71, 87, 0.6);
+        }
+        
+        #score {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: #00ff88;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4757;
+            font-size: 36px;
+            text-align: center;
+            display: none;
+            text-shadow: 0 0 15px rgba(255, 71, 87, 0.5);
+        }
+        
+        #play-again {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+            color: #000;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        #play-again:hover {
+            background: linear-gradient(45deg, #00cc6a, #00ff88);
+            transform: translateX(-50%) scale(1.05);
+        }
+        
+        #instructions {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 15px;
+            width: 400px;
+            margin-top: 10px;
+        }
+        
+        #instructions h3 {
+            color: #00ff88;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        #instructions ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        #instructions li {
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #ccc;
+        }
+        
+        #instructions li:before {
+            content: "→ ";
+            color: #00ff88;
+            font-weight: bold;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-online { background-color: #00ff88; }
+        .status-offline { background-color: #ff4757; }
+        
+        #calibration-panel {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 15px;
+            width: 400px;
+            margin-bottom: 10px;
+        }
+        
+        #calibration-panel h3 {
+            color: #00ff88;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .calibration-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        
+        .calibration-row label {
+            color: #00ff88;
+            font-size: 13px;
+            min-width: 120px;
+        }
+        
+        .calibration-row input[type="range"] {
+            flex: 1;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            outline: none;
+        }
+        
+        .calibration-row input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #00ff88;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .calibration-row input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #00ff88;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .calibration-row span {
+            color: #ffffff;
+            font-size: 12px;
+            min-width: 40px;
+            text-align: right;
+        }
+        
+        #apply-calibration, #reset-calibration {
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        #apply-calibration:hover, #reset-calibration:hover {
+            background: linear-gradient(45deg, #00cc6a, #00ff88);
+            transform: scale(1.05);
+        }
+        
+        #reset-calibration {
+            background: linear-gradient(45deg, #ff6b6b, #ff5252);
+        }
+        
+        #reset-calibration:hover {
+            background: linear-gradient(45deg, #ff5252, #ff6b6b);
+        }
+    </style>
+</head>
+<body>
+    <div id="main-container">
+        <div id="game-section">
+            <div id="game-container">
+                <div id="score">Score: 0</div>
+                <div id="game-over">Game Over!<br>Your Score: <span id="final-score">0</span></div>
+                <button id="play-again">Play Again!</button>
+            </div>
+        </div>
+        
+        <div id="video-section">
+            <div id="video-container">
+                <img id="video-feed" src="{{ url_for('video_feed') }}" alt="Webcam Feed">
+            </div>
+            
+            <div id="gesture-info">
+                <div class="info-row">
+                    <span class="info-label">Camera Status:</span>
+                    <span class="info-value">
+                        <span class="status-indicator" id="camera-status"></span>
+                        <span id="camera-status-text">Checking...</span>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Current Direction:</span>
+                    <span class="info-value">
+                        <span class="direction-indicator direction-none" id="current-direction">None</span>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Snake Direction:</span>
+                    <span class="info-value">
+                        <span class="direction-indicator direction-none" id="snake-direction">Right</span>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Game Status:</span>
+                    <span class="info-value" id="game-status">Playing</span>
+                </div>
+            </div>
+            
+            <div id="calibration-panel">
+                <h3>⚙️ Calibration Settings</h3>
+                <div class="calibration-row">
+                    <label for="gesture-threshold">Gesture Sensitivity:</label>
+                    <input type="range" id="gesture-threshold" min="0.05" max="0.2" step="0.01" value="0.1">
+                    <span id="gesture-threshold-value">0.1</span>
+                </div>
+                <div class="calibration-row">
+                    <label for="gesture-cooldown">Gesture Cooldown:</label>
+                    <input type="range" id="gesture-cooldown" min="0.1" max="1.0" step="0.1" value="0.3">
+                    <span id="gesture-cooldown-value">0.3s</span>
+                </div>
+                <div class="calibration-row">
+                    <label for="finger-threshold">Finger Detection:</label>
+                    <input type="range" id="finger-threshold" min="0.05" max="0.15" step="0.01" value="0.08">
+                    <span id="finger-threshold-value">0.08</span>
+                </div>
+                <div class="calibration-row">
+                    <label for="detection-confidence">Detection Confidence:</label>
+                    <input type="range" id="detection-confidence" min="0.5" max="0.9" step="0.1" value="0.7">
+                    <span id="detection-confidence-value">0.7</span>
+                </div>
+                <button id="apply-calibration">Apply Settings</button>
+                <button id="reset-calibration">Reset to Default</button>
+            </div>
+            
+            <div id="instructions">
+                <h3>🎮 How to Play</h3>
+                <ul>
+                    <li>Extend multiple fingers and point in a direction to move the snake</li>
+                    <li>Use index finger pointing for precise control</li>
+                    <li>Make clear, deliberate gestures for better detection</li>
+                    <li>Eat red apples to grow and increase your score</li>
+                    <li>Avoid hitting walls or the snake's own body</li>
+                    <li>Ensure good lighting and clear hand visibility</li>
+                    <li>Adjust calibration settings if gestures aren't detected properly</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score');
+        const gameOverDisplay = document.getElementById('game-over');
+        const finalScore = document.getElementById('final-score');
+        const playAgainBtn = document.getElementById('play-again');
+        
+        // New UI elements
+        const cameraStatus = document.getElementById('camera-status');
+        const cameraStatusText = document.getElementById('camera-status-text');
+        const currentDirection = document.getElementById('current-direction');
+        const snakeDirection = document.getElementById('snake-direction');
+        const gameStatus = document.getElementById('game-status');
+        
+        // Calibration elements
+        const gestureThreshold = document.getElementById('gesture-threshold');
+        const gestureCooldown = document.getElementById('gesture-cooldown');
+        const fingerThreshold = document.getElementById('finger-threshold');
+        const detectionConfidence = document.getElementById('detection-confidence');
+        const applyCalibration = document.getElementById('apply-calibration');
+        const resetCalibration = document.getElementById('reset-calibration');
+
+        function updateDirectionIndicator(element, direction) {
+            // Remove all direction classes
+            element.className = 'direction-indicator';
+            
+            // Add appropriate direction class
+            switch(direction.toLowerCase()) {
+                case 'up':
+                    element.classList.add('direction-up');
+                    break;
+                case 'down':
+                    element.classList.add('direction-down');
+                    break;
+                case 'left':
+                    element.classList.add('direction-left');
+                    break;
+                case 'right':
+                    element.classList.add('direction-right');
+                    break;
+                default:
+                    element.classList.add('direction-none');
+            }
+            
+            element.textContent = direction;
+        }
+
+        function updateCameraStatus() {
+            fetch('/camera_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.camera_available) {
+                        cameraStatus.className = 'status-indicator status-online';
+                        cameraStatusText.textContent = 'Connected';
+                    } else {
+                        cameraStatus.className = 'status-indicator status-offline';
+                        cameraStatusText.textContent = 'Disconnected';
+                    }
+                })
+                .catch(error => {
+                    cameraStatus.className = 'status-indicator status-offline';
+                    cameraStatusText.textContent = 'Error';
+                });
+        }
+
+        function updateGame() {
+            fetch('/game_state')
+                .then(response => response.json())
+                .then(data => {
+                    // Clear existing game elements
+                    document.querySelectorAll('.snake, .apple').forEach(el => el.remove());
+
+                    // Draw snake
+                    data.snake.forEach(pos => {
+                        const snakePart = document.createElement('div');
+                        snakePart.className = 'snake';
+                        snakePart.style.left = `${pos[0]}px`;
+                        snakePart.style.top = `${pos[1]}px`;
+                        gameContainer.appendChild(snakePart);
+                    });
+
+                    // Draw apple
+                    const apple = document.createElement('div');
+                    apple.className = 'apple';
+                    apple.style.left = `${data.apple[0]}px`;
+                    apple.style.top = `${data.apple[1]}px`;
+                    gameContainer.appendChild(apple);
+
+                    // Update score
+                    scoreDisplay.textContent = `Score: ${data.score}`;
+
+                    // Update direction indicators
+                    updateDirectionIndicator(currentDirection, data.current_direction);
+                    
+                    // Update snake direction based on button_direction
+                    const directionMap = {0: 'Left', 1: 'Right', 2: 'Up', 3: 'Down'};
+                    updateDirectionIndicator(snakeDirection, directionMap[data.button_direction] || 'Right');
+
+                    // Update game status
+                    if (data.game_over) {
+                        gameOverDisplay.style.display = 'block';
+                        finalScore.textContent = data.score;
+                        playAgainBtn.style.display = 'block';
+                        gameStatus.textContent = 'Game Over';
+                        gameStatus.style.color = '#ff4757';
+                    } else {
+                        gameOverDisplay.style.display = 'none';
+                        playAgainBtn.style.display = 'none';
+                        gameStatus.textContent = 'Playing';
+                        gameStatus.style.color = '#00ff88';
+                    }
+
+                    requestAnimationFrame(updateGame);
+                })
+                .catch(error => {
+                    console.error('Error fetching game state:', error);
+                    gameStatus.textContent = 'Connection Error';
+                    gameStatus.style.color = '#ff4757';
+                    requestAnimationFrame(updateGame);
+                });
+        }
+
+        playAgainBtn.addEventListener('click', () => {
+            fetch('/reset')
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data.status);
+                    updateGame();  // Refresh game state after reset
+                })
+                .catch(error => console.error('Error resetting game:', error));
+        });
+
+        // Calibration functions
+        function loadCalibrationSettings() {
+            fetch('/calibration')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.settings) {
+                        gestureThreshold.value = data.settings.gesture_threshold;
+                        gestureCooldown.value = data.settings.gesture_cooldown;
+                        fingerThreshold.value = data.settings.finger_threshold;
+                        detectionConfidence.value = data.settings.detection_confidence;
+                        
+                        // Update display values
+                        document.getElementById('gesture-threshold-value').textContent = data.settings.gesture_threshold;
+                        document.getElementById('gesture-cooldown-value').textContent = data.settings.gesture_cooldown + 's';
+                        document.getElementById('finger-threshold-value').textContent = data.settings.finger_threshold;
+                        document.getElementById('detection-confidence-value').textContent = data.settings.detection_confidence;
+                    }
+                })
+                .catch(error => console.error('Error loading calibration settings:', error));
+        }
+
+        function applyCalibrationSettings() {
+            const settings = {
+                gesture_threshold: parseFloat(gestureThreshold.value),
+                gesture_cooldown: parseFloat(gestureCooldown.value),
+                finger_threshold: parseFloat(fingerThreshold.value),
+                detection_confidence: parseFloat(detectionConfidence.value)
+            };
+
+            fetch('/calibration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    console.log('Calibration settings applied successfully');
+                    // Show success feedback
+                    applyCalibration.textContent = 'Applied!';
+                    applyCalibration.style.background = 'linear-gradient(45deg, #00ff88, #00cc6a)';
+                    setTimeout(() => {
+                        applyCalibration.textContent = 'Apply Settings';
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                console.error('Error applying calibration settings:', error);
+                applyCalibration.textContent = 'Error!';
+                applyCalibration.style.background = 'linear-gradient(45deg, #ff6b6b, #ff5252)';
+                setTimeout(() => {
+                    applyCalibration.textContent = 'Apply Settings';
+                    applyCalibration.style.background = 'linear-gradient(45deg, #00ff88, #00cc6a)';
+                }, 2000);
+            });
+        }
+
+        function resetCalibrationSettings() {
+            // Reset to default values
+            gestureThreshold.value = 0.1;
+            gestureCooldown.value = 0.3;
+            fingerThreshold.value = 0.08;
+            detectionConfidence.value = 0.7;
+            
+            // Update display values
+            document.getElementById('gesture-threshold-value').textContent = '0.1';
+            document.getElementById('gesture-cooldown-value').textContent = '0.3s';
+            document.getElementById('finger-threshold-value').textContent = '0.08';
+            document.getElementById('detection-confidence-value').textContent = '0.7';
+            
+            // Apply the reset settings
+            applyCalibrationSettings();
+        }
+
+        // Event listeners for calibration
+        gestureThreshold.addEventListener('input', function() {
+            document.getElementById('gesture-threshold-value').textContent = this.value;
+        });
+
+        gestureCooldown.addEventListener('input', function() {
+            document.getElementById('gesture-cooldown-value').textContent = this.value + 's';
+        });
+
+        fingerThreshold.addEventListener('input', function() {
+            document.getElementById('finger-threshold-value').textContent = this.value;
+        });
+
+        detectionConfidence.addEventListener('input', function() {
+            document.getElementById('detection-confidence-value').textContent = this.value;
+        });
+
+        applyCalibration.addEventListener('click', applyCalibrationSettings);
+        resetCalibration.addEventListener('click', resetCalibrationSettings);
+
+        // Initialize
+        updateCameraStatus();
+        loadCalibrationSettings();
+        updateGame();
+        
+        // Update camera status every 5 seconds
+        setInterval(updateCameraStatus, 5000);
+    </script>
+</body>
+</html>
