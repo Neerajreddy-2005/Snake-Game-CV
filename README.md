@@ -1,6 +1,6 @@
-# Snake Boogie
+# Snake-Game-CV
 
-Welcome to **Snake Boogie**, the grooviest twist on the classic Snake game! Forget keyboards—here, you draw in the air with your index finger to boogie the snake around, gobble up apples, and rack up points. Built as a funky full-stack app with Python, Flask, and a web frontend, this game lets you groove your way to victory!
+Welcome to **Snake-Game-CV**, the grooviest twist on the classic Snake game! Forget keyboards—here, you draw in the air with your index finger to boogie the snake around, gobble up apples, and rack up points. Built as a funky full-stack app with Python, Flask, and a web frontend, this game lets you groove your way to victory!
 
 ## Features
 - **Air-Drawing Control**: Swipe your index finger like a virtual pen to steer the snake (Up, Down, Left, Right).
@@ -18,9 +18,3 @@ Welcome to **Snake Boogie**, the grooviest twist on the classic Snake game! Forg
 - Libraries: `flask`, `numpy`, `opencv-python`, `mediapipe`
 - A webcam
 - A modern web browser
-
-## Installation
-1. Clone the repo:
-   ```bash
-   git clone https://github.com/yourusername/snake-boogie.git
-   cd snake-boogie
