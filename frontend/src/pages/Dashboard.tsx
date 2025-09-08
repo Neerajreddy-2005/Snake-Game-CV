@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,18 +22,6 @@ import { startGame, stopGame } from '@/services/api';
 export default function Dashboard() {
   const [gameStarted, setGameStarted] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const rightColRef = useRef<HTMLDivElement>(null);
-  const [rightHeight, setRightHeight] = useState<number>();
-
-  useEffect(() => {
-    const el = rightColRef.current;
-    if (!el) return;
-    const measure = () => setRightHeight(el.clientHeight);
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [gameStarted, settingsOpen]);
 
   const handleStartGame = async () => {
     try {
@@ -166,14 +154,14 @@ export default function Dashboard() {
           </div>
         ) : (
           /* Game Active State */
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[700px_1fr] gap-6">
             {/* Left Column - Game Board */}
-            <div className="lg:col-span-2">
-              <GameBoard preferredSize={rightHeight} />
+            <div className="lg:w-[700px]">
+              <GameBoard preferredSize={700} />
             </div>
 
             {/* Right Column - Controls and Status */}
-            <div className="grid grid-rows-[auto_auto] gap-6" ref={rightColRef}>
+            <div className="grid grid-rows-[auto_auto] gap-6">
               <VideoPanel />
               <StatusPanel />
             </div>

@@ -42,9 +42,8 @@ export const GameBoard = ({ preferredSize }: GameBoardProps) => {
     if (!container) return;
     const resize = () => {
       const containerWidth = container.clientWidth;
-      const desired = preferredSize ? preferredSize : containerWidth;
-      // Clamp to container width to avoid overflow, but if container is wider, still use desired square
-      const side = Math.min(desired, containerWidth);
+      // If a preferred size is provided, stick to it; otherwise fill container
+      const side = preferredSize ?? containerWidth;
       setRenderWidth(side);
       setRenderHeight(side); // square
     };
