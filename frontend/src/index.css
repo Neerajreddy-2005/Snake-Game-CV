@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Gaming-inspired dark theme with neon green accents */
+    --background: 200 12% 4%;
+    --foreground: 120 100% 85%;
+
+    --card: 200 15% 6%;
+    --card-foreground: 120 100% 85%;
+
+    --popover: 200 15% 6%;
+    --popover-foreground: 120 100% 85%;
+
+    --primary: 120 100% 25%;
+    --primary-foreground: 200 12% 4%;
+
+    --secondary: 200 15% 8%;
+    --secondary-foreground: 120 100% 85%;
+
+    --muted: 200 15% 10%;
+    --muted-foreground: 120 20% 65%;
+
+    --accent: 120 100% 25%;
+    --accent-foreground: 200 12% 4%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 200 12% 4%;
+
+    --border: 200 15% 15%;
+    --input: 200 15% 12%;
+    --ring: 120 100% 25%;
+
+    --radius: 0.75rem;
+
+    /* Gaming-specific colors */
+    --game-snake: 120 100% 25%;
+    --game-apple: 0 100% 50%;
+    --game-board: 200 15% 8%;
+    --game-grid: 200 15% 12%;
+    
+    /* Status colors */
+    --status-connected: 120 100% 25%;
+    --status-disconnected: 0 84% 60%;
+    --status-warning: 45 100% 50%;
+    
+    /* Glows and effects */
+    --glow-primary: 120 100% 25%;
+    --glow-intensity: 0.6;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(120 100% 25%), hsl(120 80% 35%));
+    --gradient-board: linear-gradient(145deg, hsl(200 15% 6%), hsl(200 15% 8%));
+    --gradient-panel: linear-gradient(145deg, hsl(200 15% 8%), hsl(200 15% 10%));
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-glow: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

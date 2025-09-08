@@ -20,6 +20,8 @@ game_over = False
 current_direction = "None"
 prev_index_pos = None  # Track previous index finger position
 reset_flag = False  # Flag to signal game loop restart
+game_active = False  # Flag to control whether the game loop updates state
+game_thread = None  # Reference to the background game loop thread
 
 # Enhanced MediaPipe setup
 mp_hands = mp.solutions.hands
@@ -190,7 +192,8 @@ def collision_with_apple(apple_position, score):
     return apple_position, score
 
 def collision_with_boundaries(snake_head):
-    return snake_head[0] >= 500 or snake_head[0] < 0 or snake_head[1] >= 500 or snake_head[1] < 0
+    # No longer used for game over; kept for compatibility
+    return False
 
 def collision_with_self(snake_position):
     return snake_head in snake_position[1:]
@@ -298,8 +301,12 @@ def get_hand_direction(landmarks, frame_shape):
     return -1
 
 def update_game():
-    global snake_position, apple_position, score, snake_head, button_direction, game_over, reset_flag, last_gesture_time
+    global snake_position, apple_position, score, snake_head, button_direction, game_over, reset_flag, last_gesture_time, game_active
     while cap is None or cap.isOpened():
+        # If game is not active, idle briefly and continue
+        if not game_active:
+            time.sleep(0.05)
+            continue
         if reset_flag:  # Check if reset was triggered
             reset_flag = False
             print("Game loop restarted after reset")
@@ -336,6 +343,12 @@ def update_game():
         elif button_direction == 2: snake_head[1] -= 10  # Up (fixed coordinate system)
         elif button_direction == 3: snake_head[1] += 10  # Down (fixed coordinate system)
 
+        # Wrap around edges so opposite edges are connected (toroidal board)
+        if snake_head[0] >= 500: snake_head[0] = 0
+        elif snake_head[0] < 0: snake_head[0] = 500 - 10
+        if snake_head[1] >= 500: snake_head[1] = 0
+        elif snake_head[1] < 0: snake_head[1] = 500 - 10
+
         if snake_head == apple_position:
             apple_position, score = collision_with_apple(apple_position, score)
             snake_position.insert(0, list(snake_head))
@@ -343,7 +356,8 @@ def update_game():
             snake_position.insert(0, list(snake_head))
             snake_position.pop()
 
-        if collision_with_boundaries(snake_head) or collision_with_self(snake_position):
+        # Only self-collision ends the game; boundaries wrap
+        if collision_with_self(snake_position):
             game_over = True
         time.sleep(0.03)  # Optimized for better responsiveness
 
@@ -409,7 +423,14 @@ def gen_frames():
             print(f"Video stream encode error: {encode_err}")
             time.sleep(0.01)
 
-threading.Thread(target=update_game, daemon=True).start()
+def ensure_game_thread_running():
+    global game_thread
+    if game_thread is None or not game_thread.is_alive():
+        game_thread = threading.Thread(target=update_game, daemon=True)
+        game_thread.start()
+
+# Start background thread in idle state so it's ready when activated
+ensure_game_thread_running()
 
 @atexit.register
 def cleanup():
@@ -516,6 +537,23 @@ def reset_game():
     last_gesture_time = 0
     reset_flag = True
     return jsonify({"status": "Game reset"})
+
+@app.route('/start', methods=['POST', 'GET'])
+def start_game():
+    """Activate the game loop and reset the game state."""
+    global game_active
+    ensure_game_thread_running()
+    # Reset on start to present a fresh game
+    _ = reset_game()
+    game_active = True
+    return jsonify({"status": "Game started"})
+
+@app.route('/stop', methods=['POST', 'GET'])
+def stop_game():
+    """Deactivate the game loop updates (keeps server alive)."""
+    global game_active
+    game_active = False
+    return jsonify({"status": "Game stopped"})
 
 @app.route('/video_feed')
 def video_feed():
