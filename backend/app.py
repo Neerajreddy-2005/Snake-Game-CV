@@ -583,14 +583,18 @@ def test_camera():
         })
 
 if __name__ == '__main__':
+    import os
     print("=== Snake Game with Hand Gesture Control ===")
     print(f"Camera Status: {'✓ Connected' if camera_initialized else '✗ Not Found'}")
     
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') != 'production'
+    
     print("Starting Flask application...")
-    print("Access the game at: http://localhost:5000")
-    print("Test camera at: http://localhost:5000/test_camera")
-    print("Video feed at: http://localhost:5000/video_feed")
+    print(f"Access the game at: http://localhost:{port}")
+    print(f"Test camera at: http://localhost:{port}/test_camera")
+    print(f"Video feed at: http://localhost:{port}/video_feed")
 
     # Important: do not block the server with interactive camera test
     # Use /video_feed or /test_camera endpoints instead
-    app.run(debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=port, debug=debug, use_reloader=False)

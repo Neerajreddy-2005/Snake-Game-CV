@@ -12,7 +12,7 @@ import type {
 const api = axios.create({
   // Use Vite proxy in development by default (relative base URL). Override with VITE_API_BASE_URL for prod.
   baseURL: import.meta.env.VITE_API_BASE_URL || '',
-  timeout: 5000,
+  timeout: 10000, // Increased for production
 });
 
 export const getGameState = async (): Promise<GameState> => {
