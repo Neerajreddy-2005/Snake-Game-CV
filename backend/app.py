@@ -46,7 +46,8 @@ calibration_settings = {
     'gesture_cooldown': GESTURE_COOLDOWN,
     'finger_threshold': FINGER_THRESHOLD,
     'detection_confidence': 0.7,
-    'tracking_confidence': 0.5
+    'tracking_confidence': 0.5,
+    'tick_interval': 0.03
 }
 
 # Initialize webcam with enhanced retry and release
@@ -359,7 +360,8 @@ def update_game():
         # Only self-collision ends the game; boundaries wrap
         if collision_with_self(snake_position):
             game_over = True
-        time.sleep(0.03)  # Optimized for better responsiveness
+        # Use configurable tick interval for game speed
+        time.sleep(float(calibration_settings.get('tick_interval', 0.03)))
 
 def gen_frames():
     """Generate camera frames (no hand processing here to avoid conflicts)"""
@@ -485,6 +487,8 @@ def calibration():
             calibration_settings['detection_confidence'] = float(data['detection_confidence'])
         if 'tracking_confidence' in data:
             calibration_settings['tracking_confidence'] = float(data['tracking_confidence'])
+        if 'tick_interval' in data:
+            calibration_settings['tick_interval'] = max(0.005, float(data['tick_interval']))
         
         # Reinitialize MediaPipe hands with new confidence settings
         hands = mp_hands.Hands(

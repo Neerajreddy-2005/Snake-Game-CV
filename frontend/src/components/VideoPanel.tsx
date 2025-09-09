@@ -3,38 +3,29 @@ import { Card } from '@/components/ui/card';
 import { AlertCircle, Camera } from 'lucide-react';
 
 export const VideoPanel = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let stream: MediaStream | null = null;
-
-    const start = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480, facingMode: 'user' },
-          audio: false,
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
-        }
+    setIsLoading(true);
+    setError(null);
+    // Point to Flask MJPEG stream (proxied by Vite)
+    if (imgRef.current) {
+      imgRef.current.src = '/video_feed';
+      const handleLoad = () => setIsLoading(false);
+      const handleError = () => {
+        setError('Failed to load video feed from backend. Ensure Flask is running and camera is available.');
         setIsLoading(false);
-      } catch (err) {
-        console.error('VideoPanel camera error:', err);
-        setError('Camera access is required. Please allow permission and ensure no other app is using the camera.');
-        setIsLoading(false);
-      }
-    };
-
-    start();
-
-    return () => {
-      if (stream) stream.getTracks().forEach(t => t.stop());
-    };
+      };
+      imgRef.current.addEventListener('load', handleLoad);
+      imgRef.current.addEventListener('error', handleError);
+      return () => {
+        imgRef.current?.removeEventListener('load', handleLoad);
+        imgRef.current?.removeEventListener('error', handleError);
+        if (imgRef.current) imgRef.current.src = '';
+      };
+    }
   }, []);
 
   return (
@@ -64,12 +55,10 @@ export const VideoPanel = () => {
                     </div>
                   </div>
                 )}
-                <video
-                  ref={videoRef}
+                <img
+                  ref={imgRef}
                   className="w-full h-full object-cover"
-                  autoPlay
-                  muted
-                  playsInline
+                  alt="Camera feed"
                   style={{ 
                     filter: 'drop-shadow(0 0 10px hsla(var(--glow-primary) / 0.3))',
                   }}

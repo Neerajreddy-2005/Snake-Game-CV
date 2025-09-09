@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { postGestureInfo, postCameraStatus } from '@/services/api';
 
 interface GestureControllerProps {
   onDirectionChange: (direction: number) => void;
@@ -8,51 +7,11 @@ interface GestureControllerProps {
 export const GestureController = ({ onDirectionChange }: GestureControllerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(true);
+  const [error] = useState<string | null>(null);
 
   useEffect(() => {
-    let stream: MediaStream | null = null;
     let animationFrame: number;
-
-    const initializeCamera = async () => {
-      try {
-        // Request camera permission
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
-            width: 640, 
-            height: 480,
-            facingMode: 'user'
-          }
-        });
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-          setIsInitialized(true);
-          setError(null);
-        }
-
-        // Inform backend camera is available
-        try {
-          await postCameraStatus({
-            camera_available: true,
-            camera_initialized: true,
-            frame_size: '640x480',
-            fps: 30,
-          });
-        } catch (e) {
-          // non-fatal
-          console.warn('Failed to update camera status to backend');
-        }
-
-        // Start gesture detection
-        startGestureDetection();
-      } catch (err) {
-        console.error('Camera access denied:', err);
-        setError('Camera access is required for gesture control. Please allow camera permission and refresh the page.');
-      }
-    };
 
     const startGestureDetection = () => {
       const detectGestures = () => {
@@ -130,18 +89,13 @@ export const GestureController = ({ onDirectionChange }: GestureControllerProps)
       }
     };
 
-    initializeCamera();
+    // In Flask mode the backend handles hand tracking. We only render guidance
+    startGestureDetection();
 
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
       if (animationFrame) {
         cancelAnimationFrame(animationFrame);
       }
-
-      // Inform backend camera is no longer available
-      postCameraStatus({ camera_available: false, camera_initialized: false }).catch(() => {});
     };
   }, [onDirectionChange]);
 
@@ -162,22 +116,9 @@ export const GestureController = ({ onDirectionChange }: GestureControllerProps)
   return (
     <div className="space-y-2">
       <div className="relative">
-        <video
-          ref={videoRef}
-          className="w-full h-auto rounded-lg border-2 border-border"
-          autoPlay
-          muted
-          playsInline
-        />
-        <canvas
-          ref={canvasRef}
-          className="hidden"
-        />
-        {!isInitialized && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
-            <p className="text-sm text-muted-foreground">Initializing camera...</p>
-          </div>
-        )}
+        <div className="w-full h-[240px] rounded-lg border-2 border-border flex items-center justify-center text-sm text-muted-foreground">
+          Hand gestures are detected on the backend. Use Video panel to view camera.
+        </div>
       </div>
       <p className="text-xs text-muted-foreground text-center">
         Move your hand to control the snake. Camera permission required.

@@ -19,6 +19,7 @@ export const CalibrationPanel = () => {
     finger_threshold: 0.5,
     detection_confidence: 0.5,
     tracking_confidence: 0.5,
+    tick_interval: 0.03,
   });
 
   const { data: calibrationData } = useQuery({
@@ -65,6 +66,7 @@ export const CalibrationPanel = () => {
       finger_threshold: 0.5,
       detection_confidence: 0.5,
       tracking_confidence: 0.5,
+      tick_interval: 0.03,
     };
     setSettings(defaultSettings);
   };
@@ -113,6 +115,14 @@ export const CalibrationPanel = () => {
       min: 0.1,
       max: 1.0,
       step: 0.05,
+    },
+    {
+      key: 'tick_interval' as const,
+      label: 'Game Tick Interval (s)',
+      description: 'Lower = faster snake. Increase to slow the game.',
+      min: 0.01,
+      max: 0.2,
+      step: 0.005,
     },
   ];
 

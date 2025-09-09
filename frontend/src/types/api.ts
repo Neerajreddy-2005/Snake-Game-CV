@@ -23,6 +23,7 @@ export interface CalibrationSettings {
   finger_threshold: number;
   detection_confidence: number;
   tracking_confidence: number;
+  tick_interval?: number;
 }
 
 export interface CalibrationResponse {
