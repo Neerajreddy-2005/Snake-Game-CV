@@ -10,23 +10,28 @@ import type {
 } from '../types/api';
 
 const api = axios.create({
-  // Use Vite proxy in development by default (relative base URL). Override with VITE_API_BASE_URL for prod.
-  baseURL: import.meta.env.VITE_API_BASE_URL || '',
-  timeout: 10000, // Increased for production
+  // Use Netlify Functions in production, Vite proxy in development
+  baseURL: import.meta.env.DEV ? '' : '/.netlify/functions',
+  timeout: 10000,
 });
 
 export const getGameState = async (): Promise<GameState> => {
-  const response = await api.get<GameState>('/game_state');
+  const response = await api.get<GameState>('/game-state');
   return response.data;
 };
 
 export const getCameraStatus = async (): Promise<CameraStatus> => {
-  const response = await api.get<CameraStatus>('/camera_status');
+  const response = await api.get<CameraStatus>('/camera-status');
   return response.data;
 };
 
 export const getGestureInfo = async (): Promise<GestureInfo> => {
-  const response = await api.get<GestureInfo>('/gesture_info');
+  const response = await api.get<GestureInfo>('/gesture-info');
+  return response.data;
+};
+
+export const postGestureInfo = async (payload: Partial<GestureInfo>): Promise<{ status: string; data: GestureInfo }> => {
+  const response = await api.post<{ status: string; data: GestureInfo }>('/gesture-info', payload);
   return response.data;
 };
 
@@ -43,17 +48,16 @@ export const postCalibration = async (
 };
 
 export const resetGame = async (): Promise<ResetResponse> => {
-  const response = await api.get<ResetResponse>('/reset');
+  const response = await api.get<ResetResponse>('/reset-game');
   return response.data;
 };
 
 export const startGame = async (): Promise<{ status: string }> => {
-  // GET for simplicity to avoid CORS preflight in dev
-  const response = await api.get<{ status: string }>('/start');
+  const response = await api.get<{ status: string }>('/start-game');
   return response.data;
 };
 
 export const stopGame = async (): Promise<{ status: string }> => {
-  const response = await api.get<{ status: string }>('/stop');
+  const response = await api.get<{ status: string }>('/stop-game');
   return response.data;
 };
