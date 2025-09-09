@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { postGestureInfo } from '@/services/api';
+import { postGestureInfo, postCameraStatus } from '@/services/api';
 
 interface GestureControllerProps {
   onDirectionChange: (direction: number) => void;
@@ -31,6 +31,19 @@ export const GestureController = ({ onDirectionChange }: GestureControllerProps)
           videoRef.current.play();
           setIsInitialized(true);
           setError(null);
+        }
+
+        // Inform backend camera is available
+        try {
+          await postCameraStatus({
+            camera_available: true,
+            camera_initialized: true,
+            frame_size: '640x480',
+            fps: 30,
+          });
+        } catch (e) {
+          // non-fatal
+          console.warn('Failed to update camera status to backend');
         }
 
         // Start gesture detection
@@ -126,6 +139,9 @@ export const GestureController = ({ onDirectionChange }: GestureControllerProps)
       if (animationFrame) {
         cancelAnimationFrame(animationFrame);
       }
+
+      // Inform backend camera is no longer available
+      postCameraStatus({ camera_available: false, camera_initialized: false }).catch(() => {});
     };
   }, [onDirectionChange]);
 

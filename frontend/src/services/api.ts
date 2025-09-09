@@ -9,29 +9,25 @@ import type {
   ResetResponse
 } from '../types/api';
 
+// Axios instance pointing to Flask dev server via Vite proxy (see vite.config.ts)
 const api = axios.create({
-  // Use Netlify Functions in production, Vite proxy in development
-  baseURL: import.meta.env.DEV ? '' : '/.netlify/functions',
+  baseURL: '',
   timeout: 10000,
 });
 
+// Flask endpoints (underscored names)
 export const getGameState = async (): Promise<GameState> => {
-  const response = await api.get<GameState>('/game-state');
+  const response = await api.get<GameState>('/game_state');
   return response.data;
 };
 
 export const getCameraStatus = async (): Promise<CameraStatus> => {
-  const response = await api.get<CameraStatus>('/camera-status');
+  const response = await api.get<CameraStatus>('/camera_status');
   return response.data;
 };
 
 export const getGestureInfo = async (): Promise<GestureInfo> => {
-  const response = await api.get<GestureInfo>('/gesture-info');
-  return response.data;
-};
-
-export const postGestureInfo = async (payload: Partial<GestureInfo>): Promise<{ status: string; data: GestureInfo }> => {
-  const response = await api.post<{ status: string; data: GestureInfo }>('/gesture-info', payload);
+  const response = await api.get<GestureInfo>('/gesture_info');
   return response.data;
 };
 
@@ -48,16 +44,16 @@ export const postCalibration = async (
 };
 
 export const resetGame = async (): Promise<ResetResponse> => {
-  const response = await api.get<ResetResponse>('/reset-game');
+  const response = await api.get<ResetResponse>('/reset');
   return response.data;
 };
 
 export const startGame = async (): Promise<{ status: string }> => {
-  const response = await api.get<{ status: string }>('/start-game');
+  const response = await api.get<{ status: string }>('/start');
   return response.data;
 };
 
 export const stopGame = async (): Promise<{ status: string }> => {
-  const response = await api.get<{ status: string }>('/stop-game');
+  const response = await api.get<{ status: string }>('/stop');
   return response.data;
 };

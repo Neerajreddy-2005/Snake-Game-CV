@@ -12,3 +12,10 @@
 
 [functions]
   directory = "netlify/functions"
+
+[dev]
+  framework = "vite"
+  targetPort = 8080
+
+[dev.environment]
+  VITE_USE_NETLIFY = "true"

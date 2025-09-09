@@ -18,7 +18,7 @@ import { VideoPanel } from '@/components/VideoPanel';
 import { StatusPanel } from '@/components/StatusPanel';
 import { CalibrationPanel } from '@/components/CalibrationPanel';
 import { GestureController } from '@/components/GestureController';
-import { startGame, stopGame, postGestureInfo } from '@/services/api';
+import { startGame, stopGame } from '@/services/api';
 
 export default function Dashboard() {
   const [gameStarted, setGameStarted] = useState(false);
@@ -27,14 +27,6 @@ export default function Dashboard() {
 
   const handleDirectionChange = async (direction: number) => {
     setCurrentDirection(direction);
-    try {
-      await postGestureInfo({
-        current_direction: direction === 0 ? 'Left' : direction === 1 ? 'Right' : direction === 2 ? 'Up' : 'Down',
-        button_direction: direction as 0 | 1 | 2 | 3
-      });
-    } catch (error) {
-      console.error('Failed to update gesture info:', error);
-    }
   };
 
   const handleStartGame = async () => {
@@ -177,7 +169,6 @@ export default function Dashboard() {
             {/* Right Column - Controls and Status */}
             <div className="grid grid-rows-[auto_auto_auto] gap-6">
               <GestureController onDirectionChange={handleDirectionChange} />
-              <VideoPanel />
               <StatusPanel />
             </div>
           </div>
