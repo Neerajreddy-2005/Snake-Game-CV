@@ -6,11 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Settings, RotateCcw } from 'lucide-react';
 import { getCalibration, postCalibration } from '@/services/api';
-import { useToast } from '@/hooks/use-toast';
 import type { CalibrationSettings } from '@/types/api';
 
-export const CalibrationPanel = () => {
-  const { toast } = useToast();
+type CalibrationPanelProps = { onApplied?: () => void };
+
+export const CalibrationPanel = ({ onApplied }: CalibrationPanelProps) => {
   const queryClient = useQueryClient();
   
   const [settings, setSettings] = useState<CalibrationSettings>({
@@ -30,20 +30,12 @@ export const CalibrationPanel = () => {
 
   const calibrationMutation = useMutation({
     mutationFn: postCalibration,
-    onSuccess: (data) => {
-      toast({
-        title: "Calibration Updated",
-        description: data.message,
-      });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calibration'] });
       queryClient.invalidateQueries({ queryKey: ['gestureInfo'] });
+      if (onApplied) onApplied();
     },
     onError: (error) => {
-      toast({
-        title: "Calibration Failed", 
-        description: "Failed to update calibration settings",
-        variant: "destructive",
-      });
       console.error('Calibration error:', error);
     },
   });

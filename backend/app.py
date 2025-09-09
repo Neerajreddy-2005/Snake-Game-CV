@@ -302,7 +302,7 @@ def get_hand_direction(landmarks, frame_shape):
     return -1
 
 def update_game():
-    global snake_position, apple_position, score, snake_head, button_direction, game_over, reset_flag, last_gesture_time, game_active
+    global snake_position, apple_position, score, snake_head, button_direction, game_over, reset_flag, last_gesture_time, game_active, cap
     while cap is None or cap.isOpened():
         # If game is not active, idle briefly and continue
         if not game_active:
@@ -546,6 +546,10 @@ def reset_game():
 def start_game():
     """Activate the game loop and reset the game state."""
     global game_active
+    # Reinitialize camera if needed
+    global cap, camera_initialized
+    if cap is None or not (cap and cap.isOpened()):
+        camera_initialized = initialize_camera()
     ensure_game_thread_running()
     # Reset on start to present a fresh game
     _ = reset_game()
@@ -555,12 +559,21 @@ def start_game():
 @app.route('/stop', methods=['POST', 'GET'])
 def stop_game():
     """Deactivate the game loop updates (keeps server alive)."""
-    global game_active
+    global game_active, cap
     game_active = False
+    # Fully release camera so hardware light turns off
+    try:
+        if cap:
+            cap.release()
+    finally:
+        cap = None
     return jsonify({"status": "Game stopped"})
 
 @app.route('/video_feed')
 def video_feed():
+    # If camera is not available, do not hold hardware
+    if cap is None or not cap.isOpened():
+        return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/test_camera')

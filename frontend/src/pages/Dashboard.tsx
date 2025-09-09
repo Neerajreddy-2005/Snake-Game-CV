@@ -17,17 +17,12 @@ import { GameBoard } from '@/components/GameBoard';
 import { VideoPanel } from '@/components/VideoPanel';
 import { StatusPanel } from '@/components/StatusPanel';
 import { CalibrationPanel } from '@/components/CalibrationPanel';
-import { GestureController } from '@/components/GestureController';
 import { startGame, stopGame } from '@/services/api';
 
 export default function Dashboard() {
   const [gameStarted, setGameStarted] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [currentDirection, setCurrentDirection] = useState(1);
-
-  const handleDirectionChange = async (direction: number) => {
-    setCurrentDirection(direction);
-  };
+  const [currentDirection] = useState(1);
 
   const handleStartGame = async () => {
     try {
@@ -112,7 +107,7 @@ export default function Dashboard() {
                   <DialogTitle>Calibration Settings</DialogTitle>
                 </DialogHeader>
                 <div className="overflow-auto pr-2 h-full">
-                  <CalibrationPanel />
+                  <CalibrationPanel onApplied={() => setSettingsOpen(false)} />
                 </div>
               </DialogContent>
             </Dialog>
@@ -167,8 +162,8 @@ export default function Dashboard() {
             </div>
 
             {/* Right Column - Controls and Status */}
-            <div className="grid grid-rows-[auto_auto_auto] gap-6">
-              <GestureController onDirectionChange={handleDirectionChange} />
+            <div className="grid grid-rows-[auto_auto] gap-6">
+              <VideoPanel active={gameStarted} />
               <StatusPanel />
             </div>
           </div>
