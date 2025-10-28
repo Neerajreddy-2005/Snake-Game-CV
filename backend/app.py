@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, render_template, Response, request
+from flask_cors import CORS
 import numpy as np
 import cv2
 import mediapipe as mp
@@ -9,6 +10,9 @@ import atexit
 import math
 
 app = Flask(__name__)
+
+# Enable CORS for all routes
+CORS(app, origins=['*'], methods=['GET', 'POST', 'OPTIONS'], allow_headers=['Content-Type'])
 
 # Game state
 snake_position = [[250, 250], [240, 250], [230, 250]]

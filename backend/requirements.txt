@@ -4,3 +4,4 @@ mediapipe>=0.10.20,<0.11               # Hand gesture recognition (Windows wheel
 protobuf>=3.20.3,<5                    # MediaPipe compatibility
 typing-extensions>=4.7,<5              # Typing helpers
 flask>=2.2,<3                          # Web framework
+flask-cors>=4.0.0                      # Cross-Origin Resource Sharing
