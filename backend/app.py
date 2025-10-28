@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, Response, request
 from flask_cors import CORS
+import base64
 import numpy as np
 import cv2
 import mediapipe as mp
@@ -623,6 +624,61 @@ def keyboard_control():
         "direction": current_direction,
         "button_direction": button_direction
     })
+
+@app.route('/process_frame', methods=['POST'])
+def process_frame():
+    """Process video frame from frontend and detect gestures"""
+    global button_direction, current_direction, last_gesture_time
+    
+    try:
+        data = request.get_json()
+        image_data = data.get('image')
+        
+        if not image_data:
+            return jsonify({"error": "No image data provided"}), 400
+        
+        # Remove data URL prefix
+        if image_data.startswith('data:image'):
+            image_data = image_data.split(',')[1]
+        
+        # Decode base64 image
+        image_bytes = base64.b64decode(image_data)
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if frame is None:
+            return jsonify({"error": "Failed to decode image"}), 400
+        
+        # Flip frame horizontally for mirror effect
+        frame = cv2.flip(frame, 1)
+        
+        # Convert BGR to RGB for MediaPipe
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        
+        # Process with MediaPipe
+        result = hands.process(rgb_frame)
+        
+        if result.multi_hand_landmarks:
+            for hand_landmarks in result.multi_hand_landmarks:
+                current_time = time.time()
+                # Add cooldown to prevent rapid direction changes
+                if current_time - last_gesture_time > calibration_settings['gesture_cooldown']:
+                    direction = get_hand_direction(hand_landmarks.landmark, frame.shape)
+                    if direction != -1 and direction != button_direction:
+                        button_direction = direction
+                        last_gesture_time = current_time
+                        print(f"Direction changed to: {current_direction}")
+        
+        return jsonify({
+            "status": "success",
+            "direction": current_direction,
+            "button_direction": button_direction,
+            "gesture_detected": current_direction != "None"
+        })
+        
+    except Exception as e:
+        print(f"Error processing frame: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/video_feed')
 def video_feed():

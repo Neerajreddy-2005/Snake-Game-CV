@@ -1,19 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
-import { BrowserCamera } from './BrowserCamera';
-import { gestureDetector, type GestureResult } from '@/services/gestureDetection';
+import { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Hand, Zap, ZapOff } from 'lucide-react';
+import { CameraCapture } from './CameraCapture';
 
-// API function to send gesture commands to backend
-const sendGestureCommand = async (direction: string) => {
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/keyboard_control`, {
+// API function to send video frame to backend for gesture processing
+const processFrame = async (imageData: string) => {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/process_frame`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ direction }),
+    body: JSON.stringify({ image: imageData }),
   });
   return response.json();
 };
@@ -25,38 +24,31 @@ export const GestureController = () => {
   const lastGestureTime = useRef<number>(0);
   const gestureCooldown = 500; // 500ms cooldown between gestures
 
-  const gestureMutation = useMutation({
-    mutationFn: sendGestureCommand,
+  const frameMutation = useMutation({
+    mutationFn: processFrame,
     onSuccess: (data) => {
-      console.log('Gesture sent:', data);
-    },
-    onError: (error) => {
-      console.error('Failed to send gesture:', error);
-    }
-  });
-
-  const handleFrame = async (canvas: HTMLCanvasElement) => {
-    if (!isDetecting) return;
-
-    try {
-      const result: GestureResult = await gestureDetector.detectGesture(canvas);
-      
-      if (result.direction !== 'none' && result.confidence > 0.7) {
+      if (data.gesture_detected && data.direction !== 'None') {
         const now = Date.now();
         
         // Apply cooldown to prevent spam
         if (now - lastGestureTime.current > gestureCooldown) {
-          setLastGesture(result.direction);
+          setLastGesture(data.direction);
           setGestureCount(prev => prev + 1);
           lastGestureTime.current = now;
-          
-          // Send gesture to backend
-          gestureMutation.mutate(result.direction);
+          console.log('Gesture detected:', data.direction);
         }
       }
-    } catch (error) {
-      console.error('Gesture detection error:', error);
+    },
+    onError: (error) => {
+      console.error('Failed to process frame:', error);
     }
+  });
+
+  const handleFrame = (imageData: string) => {
+    if (!isDetecting) return;
+    
+    // Send frame to backend for processing
+    frameMutation.mutate(imageData);
   };
 
   const toggleDetection = () => {
@@ -93,7 +85,7 @@ export const GestureController = () => {
           </Button>
         </div>
 
-        <BrowserCamera 
+        <CameraCapture 
           onFrame={handleFrame}
           active={isDetecting}
         />
@@ -114,7 +106,7 @@ export const GestureController = () => {
             <p className="text-sm text-green-600">
               🎯 Gesture detection active! Make hand gestures to control the snake.
             </p>
-            <div className="mt-2 text-xs text-muted-foreground">
+            <div className="mt-2 text-xs text-muted-foreground space-y-1">
               <p>• Extend multiple fingers and move in a direction</p>
               <p>• Or point with your index finger</p>
               <p>• Keep your hand visible in the camera frame</p>

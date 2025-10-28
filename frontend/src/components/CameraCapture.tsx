@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { AlertCircle, Camera, Video, VideoOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AlertCircle, Camera, Video, VideoOff } from 'lucide-react';
 
-type BrowserCameraProps = {
-  onFrame?: (canvas: HTMLCanvasElement) => void;
+type CameraCaptureProps = {
+  onFrame?: (imageData: string) => void;
   active?: boolean;
 };
 
-export const BrowserCamera = ({ onFrame, active = true }: BrowserCameraProps) => {
+export const CameraCapture = ({ onFrame, active = true }: CameraCaptureProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -78,9 +78,12 @@ export const BrowserCamera = ({ onFrame, active = true }: BrowserCameraProps) =>
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
         
+        // Convert canvas to base64 image data
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        
         // Send frame to parent component
         if (onFrame) {
-          onFrame(canvas);
+          onFrame(imageData);
         }
       }
       requestAnimationFrame(captureFrame);
@@ -109,7 +112,7 @@ export const BrowserCamera = ({ onFrame, active = true }: BrowserCameraProps) =>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Camera className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">Browser Camera</h3>
+            <h3 className="text-lg font-semibold">Camera Feed</h3>
           </div>
           <div className="flex gap-2">
             {!isStreaming ? (
@@ -187,7 +190,7 @@ export const BrowserCamera = ({ onFrame, active = true }: BrowserCameraProps) =>
         {permissionGranted && (
           <div className="text-center">
             <p className="text-sm text-green-600">
-              ✅ Camera permission granted! You can now use gestures to control the snake.
+              ✅ Camera permission granted! Make hand gestures to control the snake.
             </p>
           </div>
         )}
