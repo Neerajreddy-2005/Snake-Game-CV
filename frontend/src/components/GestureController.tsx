@@ -56,6 +56,7 @@ export const GestureController = ({ gameActive }: GestureControllerProps) => {
     try {
       setIsLoading(true);
       setError(null);
+      console.log('🎥 Starting camera...');
 
       // Request camera permission
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -67,13 +68,14 @@ export const GestureController = ({ gameActive }: GestureControllerProps) => {
         audio: false
       });
 
+      console.log('✅ Camera stream obtained:', stream);
       streamRef.current = stream;
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
         setIsStreaming(true);
-        console.log('✅ Camera access granted');
+        console.log('✅ Camera access granted and video started');
       }
     } catch (err) {
       console.error('❌ Camera access denied:', err);

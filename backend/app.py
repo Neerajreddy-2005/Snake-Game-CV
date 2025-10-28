@@ -147,8 +147,9 @@ def initialize_camera():
     cap = None
     return False
 
-# Initialize camera
-camera_initialized = initialize_camera()
+# Initialize camera - only for cloud environments or when explicitly requested
+# For local testing, we'll let the frontend handle camera access
+camera_initialized = False  # Set to False for local testing
 
 def create_placeholder_frame():
     frame = np.zeros((480, 640, 3), dtype=np.uint8)
@@ -634,12 +635,15 @@ def process_frame():
         data = request.get_json()
         image_data = data.get('image')
         
+        print(f"Received frame processing request. Image data length: {len(image_data) if image_data else 'None'}")
+        
         if not image_data:
             return jsonify({"error": "No image data provided"}), 400
         
         # Remove data URL prefix
         if image_data.startswith('data:image'):
             image_data = image_data.split(',')[1]
+            print("Removed data URL prefix")
         
         # Decode base64 image
         image_bytes = base64.b64decode(image_data)
@@ -648,6 +652,8 @@ def process_frame():
         
         if frame is None:
             return jsonify({"error": "Failed to decode image"}), 400
+        
+        print(f"Successfully decoded image. Frame shape: {frame.shape}")
         
         # Flip frame horizontally for mirror effect
         frame = cv2.flip(frame, 1)
@@ -659,6 +665,7 @@ def process_frame():
         result = hands.process(rgb_frame)
         
         if result.multi_hand_landmarks:
+            print(f"Hand landmarks detected: {len(result.multi_hand_landmarks)} hands")
             for hand_landmarks in result.multi_hand_landmarks:
                 current_time = time.time()
                 # Add cooldown to prevent rapid direction changes
@@ -668,6 +675,8 @@ def process_frame():
                         button_direction = direction
                         last_gesture_time = current_time
                         print(f"Direction changed to: {current_direction}")
+        else:
+            print("No hand landmarks detected in this frame")
         
         return jsonify({
             "status": "success",
@@ -678,6 +687,8 @@ def process_frame():
         
     except Exception as e:
         print(f"Error processing frame: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/video_feed')
