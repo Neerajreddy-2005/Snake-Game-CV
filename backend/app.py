@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, Response, request
+from flask import Flask, jsonify, Response, request
 from flask_cors import CORS
 import numpy as np
 import cv2
@@ -11,8 +11,18 @@ import math
 
 app = Flask(__name__)
 
-# Enable CORS for all routes
-CORS(app, origins=['*'], methods=['GET', 'POST', 'OPTIONS'], allow_headers=['Content-Type'])
+# Enable CORS for all routes - allow Netlify frontend
+CORS(app, 
+     origins=[
+         'https://snake-game-cv.netlify.app',  # Your Netlify URL
+         'http://localhost:3000',  # Local development
+         'http://localhost:5173',  # Vite dev server
+         'http://127.0.0.1:3000',
+         'http://127.0.0.1:5173'
+     ], 
+     methods=['GET', 'POST', 'OPTIONS'], 
+     allow_headers=['Content-Type', 'Authorization'],
+     supports_credentials=True)
 
 # Game state
 snake_position = [[250, 250], [240, 250], [230, 250]]
@@ -446,7 +456,21 @@ def cleanup():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    """API health check endpoint"""
+    return jsonify({
+        "status": "success",
+        "message": "Snake Game CV API is running",
+        "endpoints": {
+            "game_state": "/game_state",
+            "video_feed": "/video_feed",
+            "camera_status": "/camera_status",
+            "calibration": "/calibration",
+            "reset": "/reset",
+            "start": "/start",
+            "stop": "/stop",
+            "test_camera": "/test_camera"
+        }
+    })
 
 @app.route('/game_state')
 def game_state():
