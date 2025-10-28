@@ -163,7 +163,7 @@ export default function Dashboard() {
 
             {/* Right Column - Controls and Status */}
             <div className="grid grid-rows-[auto_auto] gap-6">
-              <GestureController />
+              <GestureController gameActive={gameStarted} />
               <StatusPanel />
             </div>
           </div>
