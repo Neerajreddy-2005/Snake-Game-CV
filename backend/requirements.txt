@@ -1,7 +1,11 @@
-opencv-contrib-python>=4.8,<5           # Full OpenCV with contrib modules
-numpy>=1.23,<2.1                        # Compatible with MediaPipe 0.10.x
-mediapipe>=0.10.20,<0.11               # Hand gesture recognition (Windows wheels available)
-protobuf>=3.20.3,<5                    # MediaPipe compatibility
-typing-extensions>=4.7,<5              # Typing helpers
-flask>=2.2,<3                          # Web framework
-flask-cors>=4.0.0                      # Cross-Origin Resource Sharing
+# Core dependencies with specific versions for Render compatibility
+opencv-contrib-python==4.8.1.78
+numpy==1.24.3
+mediapipe==0.10.7
+protobuf==4.25.1
+typing-extensions==4.8.0
+flask==2.3.3
+flask-cors==4.0.0
+# Additional dependencies for better compatibility
+Pillow==10.0.1
+scipy==1.11.3
