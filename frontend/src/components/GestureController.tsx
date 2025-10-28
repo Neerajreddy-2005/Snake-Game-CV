@@ -1,128 +1,127 @@
 import { useEffect, useRef, useState } from 'react';
+import { BrowserCamera } from './BrowserCamera';
+import { gestureDetector, type GestureResult } from '@/services/gestureDetection';
+import { useMutation } from '@tanstack/react-query';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Hand, Zap, ZapOff } from 'lucide-react';
 
-interface GestureControllerProps {
-  onDirectionChange: (direction: number) => void;
-}
+// API function to send gesture commands to backend
+const sendGestureCommand = async (direction: string) => {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/keyboard_control`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ direction }),
+  });
+  return response.json();
+};
 
-export const GestureController = ({ onDirectionChange }: GestureControllerProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isInitialized, setIsInitialized] = useState(true);
-  const [error] = useState<string | null>(null);
+export const GestureController = () => {
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [lastGesture, setLastGesture] = useState<string>('none');
+  const [gestureCount, setGestureCount] = useState(0);
+  const lastGestureTime = useRef<number>(0);
+  const gestureCooldown = 500; // 500ms cooldown between gestures
 
-  useEffect(() => {
-    let animationFrame: number;
+  const gestureMutation = useMutation({
+    mutationFn: sendGestureCommand,
+    onSuccess: (data) => {
+      console.log('Gesture sent:', data);
+    },
+    onError: (error) => {
+      console.error('Failed to send gesture:', error);
+    }
+  });
 
-    const startGestureDetection = () => {
-      const detectGestures = () => {
-        if (!videoRef.current || !canvasRef.current) return;
+  const handleFrame = async (canvas: HTMLCanvasElement) => {
+    if (!isDetecting) return;
 
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
+    try {
+      const result: GestureResult = await gestureDetector.detectGesture(canvas);
+      
+      if (result.direction !== 'none' && result.confidence > 0.7) {
+        const now = Date.now();
         
-        if (!ctx) return;
-
-        // Set canvas size to match video
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        // Draw video frame to canvas
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        // Simple gesture detection based on hand position
-        // This is a basic implementation - you can enhance it with MediaPipe
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const gesture = detectHandGesture(imageData, canvas.width, canvas.height);
-        
-        if (gesture !== -1) {
-          onDirectionChange(gesture);
-        }
-
-        animationFrame = requestAnimationFrame(detectGestures);
-      };
-
-      detectGestures();
-    };
-
-    const detectHandGesture = (imageData: ImageData, width: number, height: number): number => {
-      // Simple gesture detection based on color analysis
-      // This is a placeholder - replace with proper hand detection
-      const data = imageData.data;
-      let handPixels = 0;
-      let centerX = 0;
-      let centerY = 0;
-
-      // Look for skin-colored pixels (simplified)
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        
-        // Basic skin color detection
-        if (r > 95 && g > 40 && b > 20 && r > g && r > b && r - g > 15) {
-          handPixels++;
-          const pixelIndex = i / 4;
-          centerX += pixelIndex % width;
-          centerY += Math.floor(pixelIndex / width);
+        // Apply cooldown to prevent spam
+        if (now - lastGestureTime.current > gestureCooldown) {
+          setLastGesture(result.direction);
+          setGestureCount(prev => prev + 1);
+          lastGestureTime.current = now;
+          
+          // Send gesture to backend
+          gestureMutation.mutate(result.direction);
         }
       }
+    } catch (error) {
+      console.error('Gesture detection error:', error);
+    }
+  };
 
-      if (handPixels < 1000) return -1; // Not enough hand pixels
-
-      centerX = centerX / handPixels;
-      centerY = centerY / handPixels;
-
-      // Determine direction based on hand position
-      const centerScreenX = width / 2;
-      const centerScreenY = height / 2;
-      
-      const deltaX = centerX - centerScreenX;
-      const deltaY = centerY - centerScreenY;
-      
-      const threshold = 50;
-
-      if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        return deltaX > threshold ? 1 : 0; // Right : Left
-      } else {
-        return deltaY > threshold ? 3 : 2; // Down : Up
-      }
-    };
-
-    // In Flask mode the backend handles hand tracking. We only render guidance
-    startGestureDetection();
-
-    return () => {
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
-    };
-  }, [onDirectionChange]);
-
-  if (error) {
-    return (
-      <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-        <p className="text-destructive text-sm">{error}</p>
-        <button 
-          onClick={() => window.location.reload()}
-          className="mt-2 px-3 py-1 bg-destructive text-destructive-foreground rounded text-sm"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
+  const toggleDetection = () => {
+    setIsDetecting(!isDetecting);
+    if (!isDetecting) {
+      setGestureCount(0);
+    }
+  };
 
   return (
-    <div className="space-y-2">
-      <div className="relative">
-        <div className="w-full h-[240px] rounded-lg border-2 border-border flex items-center justify-center text-sm text-muted-foreground">
-          Hand gestures are detected on the backend. Use Video panel to view camera.
+    <Card className="p-4 bg-gradient-to-br from-card to-secondary">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Hand className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold">Gesture Control</h3>
+          </div>
+          <Button
+            onClick={toggleDetection}
+            variant={isDetecting ? "destructive" : "default"}
+            size="sm"
+          >
+            {isDetecting ? (
+              <>
+                <ZapOff className="h-4 w-4 mr-2" />
+                Stop Detection
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4 mr-2" />
+                Start Detection
+              </>
+            )}
+          </Button>
         </div>
+
+        <BrowserCamera 
+          onFrame={handleFrame}
+          active={isDetecting}
+        />
+
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="text-center">
+            <p className="text-muted-foreground">Last Gesture</p>
+            <p className="font-mono text-lg capitalize">{lastGesture}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-muted-foreground">Gestures Detected</p>
+            <p className="font-mono text-lg">{gestureCount}</p>
+          </div>
+        </div>
+
+        {isDetecting && (
+          <div className="text-center">
+            <p className="text-sm text-green-600">
+              🎯 Gesture detection active! Make hand gestures to control the snake.
+            </p>
+            <div className="mt-2 text-xs text-muted-foreground">
+              <p>• Extend multiple fingers and move in a direction</p>
+              <p>• Or point with your index finger</p>
+              <p>• Keep your hand visible in the camera frame</p>
+            </div>
+          </div>
+        )}
       </div>
-      <p className="text-xs text-muted-foreground text-center">
-        Move your hand to control the snake. Camera permission required.
-      </p>
-    </div>
+    </Card>
   );
 };

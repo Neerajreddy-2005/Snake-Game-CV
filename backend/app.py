@@ -597,6 +597,33 @@ def stop_game():
         cap = None
     return jsonify({"status": "Game stopped"})
 
+@app.route('/keyboard_control', methods=['POST'])
+def keyboard_control():
+    """Handle keyboard/gesture input for snake direction control"""
+    global button_direction, current_direction
+    
+    data = request.get_json()
+    direction = data.get('direction')
+    
+    if direction == 'left':
+        button_direction = 0
+        current_direction = "Left"
+    elif direction == 'right':
+        button_direction = 1
+        current_direction = "Right"
+    elif direction == 'up':
+        button_direction = 2
+        current_direction = "Up"
+    elif direction == 'down':
+        button_direction = 3
+        current_direction = "Down"
+    
+    return jsonify({
+        "status": "success",
+        "direction": current_direction,
+        "button_direction": button_direction
+    })
+
 @app.route('/video_feed')
 def video_feed():
     # If camera is not available, do not hold hardware
