@@ -14,7 +14,7 @@ app = Flask(__name__)
 # Enable CORS for all routes - allow Netlify frontend
 CORS(app, 
      origins=[
-         'https://snake-game-cv.netlify.app',  # Your Netlify URL
+         'https://snake-gamecv.netlify.app',  # Your Netlify URL
          'http://localhost:3000',  # Local development
          'http://localhost:5173',  # Vite dev server
          'http://127.0.0.1:3000',
