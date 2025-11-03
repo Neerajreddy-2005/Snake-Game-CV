@@ -1,8 +1,6 @@
-# Python 3.11 compatible versions
-opencv-contrib-python==4.8.1.78
-numpy==1.24.3
-mediapipe==0.10.7
-protobuf>=3.11,<4.0
-flask==2.3.3
-flask-cors==4.0.0
-Pillow==10.0.1
+opencv-contrib-python>=4.8,<5           # Full OpenCV with contrib modules
+numpy>=1.23,<2.1                        # Compatible with MediaPipe 0.10.x
+mediapipe>=0.10.20,<0.11               # Hand gesture recognition (Windows wheels available)
+protobuf>=3.20.3,<5                    # MediaPipe compatibility
+typing-extensions>=4.7,<5              # Typing helpers
+flask>=2.2,<3                          # Web framework

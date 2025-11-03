@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { GameBoard } from '@/components/GameBoard';
-import { GestureController } from '@/components/GestureController';
+import { VideoPanel } from '@/components/VideoPanel';
 import { StatusPanel } from '@/components/StatusPanel';
 import { CalibrationPanel } from '@/components/CalibrationPanel';
 import { startGame, stopGame } from '@/services/api';
@@ -163,7 +163,7 @@ export default function Dashboard() {
 
             {/* Right Column - Controls and Status */}
             <div className="grid grid-rows-[auto_auto] gap-6">
-              <GestureController gameActive={gameStarted} />
+              <VideoPanel active={gameStarted} />
               <StatusPanel />
             </div>
           </div>

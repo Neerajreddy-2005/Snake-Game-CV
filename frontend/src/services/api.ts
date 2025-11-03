@@ -9,9 +9,9 @@ import type {
   ResetResponse
 } from '../types/api';
 
-// Axios instance - uses proxy in dev, direct URL in production
+// Axios instance pointing to Flask dev server via Vite proxy (see vite.config.ts)
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '',
+  baseURL: '',
   timeout: 10000,
 });
 

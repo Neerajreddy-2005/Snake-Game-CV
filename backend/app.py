@@ -1,6 +1,4 @@
-from flask import Flask, jsonify, Response, request
-from flask_cors import CORS
-import base64
+from flask import Flask, jsonify, render_template, Response, request
 import numpy as np
 import cv2
 import mediapipe as mp
@@ -11,19 +9,6 @@ import atexit
 import math
 
 app = Flask(__name__)
-
-# Enable CORS for all routes - allow Netlify frontend
-CORS(app, 
-     origins=[
-         'https://snake-gamecv.netlify.app',  # Your Netlify URL
-         'http://localhost:3000',  # Local development
-         'http://localhost:5173',  # Vite dev server
-         'http://127.0.0.1:3000',
-         'http://127.0.0.1:5173'
-     ], 
-     methods=['GET', 'POST', 'OPTIONS'], 
-     allow_headers=['Content-Type', 'Authorization'],
-     supports_credentials=True)
 
 # Game state
 snake_position = [[250, 250], [240, 250], [230, 250]]
@@ -147,9 +132,8 @@ def initialize_camera():
     cap = None
     return False
 
-# Initialize camera - only for cloud environments or when explicitly requested
-# For local testing, we'll let the frontend handle camera access
-camera_initialized = False  # Set to False for local testing
+# Initialize camera
+camera_initialized = initialize_camera()
 
 def create_placeholder_frame():
     frame = np.zeros((480, 640, 3), dtype=np.uint8)
@@ -458,21 +442,7 @@ def cleanup():
 
 @app.route('/')
 def index():
-    """API health check endpoint"""
-    return jsonify({
-        "status": "success",
-        "message": "Snake Game CV API is running",
-        "endpoints": {
-            "game_state": "/game_state",
-            "video_feed": "/video_feed",
-            "camera_status": "/camera_status",
-            "calibration": "/calibration",
-            "reset": "/reset",
-            "start": "/start",
-            "stop": "/stop",
-            "test_camera": "/test_camera"
-        }
-    })
+    return render_template('index.html')
 
 @app.route('/game_state')
 def game_state():
@@ -598,98 +568,6 @@ def stop_game():
     finally:
         cap = None
     return jsonify({"status": "Game stopped"})
-
-@app.route('/keyboard_control', methods=['POST'])
-def keyboard_control():
-    """Handle keyboard/gesture input for snake direction control"""
-    global button_direction, current_direction
-    
-    data = request.get_json()
-    direction = data.get('direction')
-    
-    if direction == 'left':
-        button_direction = 0
-        current_direction = "Left"
-    elif direction == 'right':
-        button_direction = 1
-        current_direction = "Right"
-    elif direction == 'up':
-        button_direction = 2
-        current_direction = "Up"
-    elif direction == 'down':
-        button_direction = 3
-        current_direction = "Down"
-    
-    return jsonify({
-        "status": "success",
-        "direction": current_direction,
-        "button_direction": button_direction
-    })
-
-@app.route('/process_frame', methods=['POST'])
-def process_frame():
-    """Process video frame from frontend and detect gestures"""
-    global button_direction, current_direction, last_gesture_time
-    
-    try:
-        data = request.get_json()
-        image_data = data.get('image')
-        
-        print(f"Received frame processing request. Image data length: {len(image_data) if image_data else 'None'}")
-        
-        if not image_data:
-            return jsonify({"error": "No image data provided"}), 400
-        
-        # Remove data URL prefix
-        if image_data.startswith('data:image'):
-            image_data = image_data.split(',')[1]
-            print("Removed data URL prefix")
-        
-        # Decode base64 image
-        image_bytes = base64.b64decode(image_data)
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        if frame is None:
-            return jsonify({"error": "Failed to decode image"}), 400
-        
-        print(f"Successfully decoded image. Frame shape: {frame.shape}")
-        
-        # Flip frame horizontally for mirror effect
-        frame = cv2.flip(frame, 1)
-        
-        # Convert BGR to RGB for MediaPipe
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        
-        # Process with MediaPipe
-        result = hands.process(rgb_frame)
-        
-        if result.multi_hand_landmarks:
-            print(f"Hand landmarks detected: {len(result.multi_hand_landmarks)} hands")
-            for hand_landmarks in result.multi_hand_landmarks:
-                current_time = time.time()
-                # Add cooldown to prevent rapid direction changes
-                if current_time - last_gesture_time > calibration_settings['gesture_cooldown']:
-                    direction = get_hand_direction(hand_landmarks.landmark, frame.shape)
-                    if direction != -1 and direction != button_direction:
-                        button_direction = direction
-                        last_gesture_time = current_time
-                        print(f"Direction changed to: {current_direction}")
-        else:
-            print("No hand landmarks detected in this frame")
-        
-        return jsonify({
-            "status": "success",
-            "direction": current_direction,
-            "button_direction": button_direction,
-            "gesture_detected": current_direction != "None"
-        })
-        
-    except Exception as e:
-        print(f"Error processing frame: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
 
 @app.route('/video_feed')
 def video_feed():
